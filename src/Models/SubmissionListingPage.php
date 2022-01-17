@@ -177,7 +177,6 @@ class SubmissionListingPage extends \Page implements PermissionProvider
         }
 
         // base fields
-        $fields['ID'] = _t(__CLASS__ . '.ID','ID');
         $fields['Created.Nice'] = _t(__CLASS__ . '.CREATED','Created');
 
         if($editableFields = EditableFormField::get()->filter(array('ParentID' => $form->ID))) {
