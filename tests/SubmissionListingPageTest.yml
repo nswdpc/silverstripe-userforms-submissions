@@ -1,0 +1,64 @@
+SilverStripe\Security\Permission:
+  submissionviewer:
+    Code: USERFORM_SUBMISSION_VIEWER
+SilverStripe\Security\Group:
+  canviewsubmissions:
+    Title: Can view
+    Permissions:
+      - =>SilverStripe\Security\Permission.submissionviewer
+SilverStripe\Security\Member:
+  viewer:
+    FirstName: 'Test'
+    Surname: 'Viewer'
+    Email: 'test1@example.com'
+    Groups:
+      - =>SilverStripe\Security\Group.canviewsubmissions
+  notaviewer:
+    FirstName: 'Test'
+    Surname: 'Not-Viewer'
+    Email: 'test2@example.com'
+
+SilverStripe\UserForms\Model\EditableFormField\EditableFormStep:
+  form1step1:
+    Title: 'Step 1'
+    ParentID: 83
+    ParentClass: SilverStripe\UserForms\Model\UserDefinedForm
+SilverStripe\UserForms\Model\EditableFormField\EditableTextField:
+  textfield1:
+    Name: TextField1
+    Title: 'Text Field 1'
+    ShowInSummary: 1
+    ParentID: 83
+    ParentClass: SilverStripe\UserForms\Model\UserDefinedForm
+  textfield2:
+    Name: TextField2
+    Title: 'Text Field 2'
+    ShowInSummary: 1
+    ParentID: 83
+    ParentClass: SilverStripe\UserForms\Model\UserDefinedForm
+
+SilverStripe\UserForms\Model\UserDefinedForm:
+  udf:
+    ID: 83
+    Content: '<p>Form Content</p>'
+    Title: User Defined Form
+    Fields:
+      - =>SilverStripe\UserForms\Model\EditableFormField\EditableFormStep.form1step1
+      - =>SilverStripe\UserForms\Model\EditableFormField\EditableTextField.textfield1
+      - =>SilverStripe\UserForms\Model\EditableFormField\EditableTextField.textfield2
+NSWDPC\UserForms\Submissions\SubmissionListingPage:
+  listingpage:
+    UserDefinedForm: =>SilverStripe\UserForms\Model\UserDefinedForm.udf
+SilverStripe\UserForms\Model\Submission\SubmittedForm:
+  submittedudf:
+    ID: 103
+    Parent: =>SilverStripe\UserForms\Model\UserDefinedForm.udf
+SilverStripe\UserForms\Model\Submission\SubmittedFormField:
+  textfield1:
+    Name: 'TextField1'
+    Value: 'TextField1 Value'
+    Parent: =>SilverStripe\UserForms\Model\Submission\SubmittedForm.submittedudf
+  textfield2:
+    Name: 'TextField2'
+    Value: 'TextField2 Value'
+    Parent: =>SilverStripe\UserForms\Model\Submission\SubmittedForm.submittedudf
