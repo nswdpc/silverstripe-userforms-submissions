@@ -3,15 +3,19 @@
 namespace NSWDPC\UserForms\Submissions;
 
 use DNADesign\ElementalUserForms\Model\ElementForm;
+use Silverstripe\Control\Controller;
 use SilverStripe\Forms\DropdownField;
 use SilverStripe\ORM\ArrayList;
+use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\PaginatedList;
 use SilverStripe\Security\Security;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\PermissionProvider;
 use SilverStripe\UserForms\Model;
 use SilverStripe\UserForms\Model\UserDefinedForm;
 use SilverStripe\UserForms\Model\EditableFormField;
+use SilverStripe\UserForms\Model\Submission\SubmittedForm;
 use SilverStripe\View\ArrayData;
 
 /**
@@ -61,6 +65,21 @@ class SubmissionListingPage extends \Page implements PermissionProvider
     ];
 
     /**
+     * @var array
+     */
+    private $_cache_summary_values = [];
+
+    /**
+     * @var array
+     */
+    private $_cache_summary_fields = [];
+
+    /**
+     * @var null
+     */
+    private $_cache_submission_form = null;
+
+    /**
      * CMS Fields
      * @return FieldList
      */
@@ -99,6 +118,16 @@ class SubmissionListingPage extends \Page implements PermissionProvider
     }
 
     /**
+     * Reset cache properties on write
+     */
+    public function onBeforeWrite() {
+        parent::onBeforeWrite();
+        $this->_cache_summary_fields = [];
+        $this->_cache_summary_values = [];
+        $this->_cache_submission_form = null;
+    }
+
+    /**
      * Retrieve the form, based on the selection made
      * @return mixed
      */
@@ -106,70 +135,83 @@ class SubmissionListingPage extends \Page implements PermissionProvider
         if(!self::canViewSubmissions()) {
             return false;
         }
+        if($this->_cache_submission_form) {
+            return $this->_cache_submission_form;
+        }
         $form = $this->UserDefinedForm();
         if(!$form || !$form->exists()) {
             $form = $this->ElementForm();
         }
-        return $form;
-    }
-
-    /**
-     * Return the record id for the submission
-     */
-    public function getSubmissionFormID() {
-        $form = $this->getSubmissionForm();
-        if(!empty($form->ID)) {
-            return $form->ID;
-        } else {
-            return "";
-        }
+        $this->_cache_submission_form = $form;
+        return $this->_cache_submission_form;
     }
 
     /**
      * Retrieve submissions linked to the form
-     * @return mixed
+     * @return DataList|null
      */
-    public function getSubmissions() {
+    public function getSubmissions() : ?DataList {
         if(!self::canViewSubmissions()) {
-            return false;
+            return null;
         }
-        $form = $this->getSubmissionForm();
-        $submissions = $form ? $form->Submissions()->sort('Created DESC') : false;
+        $submissions = null;
+        if($form = $this->getSubmissionForm()) {
+            $submissions = $form->Submissions()->sort('Created DESC');
+        }
         return $submissions;
     }
 
     /**
      * Get the form submissions as an ArrayList, with fields based on getSummaryFields
-     * @return ArrayList
+     * @return PaginatedList|null
      */
-    public function getSubmissionSummary() : ArrayList {
-        $list = ArrayList::create();
+    public function getSubmissionSummary() : ?PaginatedList {
+        /**
+         * @var PaginatedList|null
+         */
         $submissions = $this->getSubmissions();
-        $summaryFields = $this->getSummaryFields();
         if(!$submissions) {
-            return $list;
+            return null;
         }
-        foreach($submissions as $submission) {
+        $request = Controller::curr()->getRequest();
+        $paginatedList = PaginatedList::create($submissions, $request);
+        $summaryFields = $this->getSummaryFields();
+        foreach($paginatedList->getIterator() as $i => $submittedForm) {
             $fields = ArrayList::create();
             foreach($summaryFields as $field => $label) {
-                $fields->push(ArrayData::create([
+                $value = $submittedForm->relField($field);
+                $summaryFieldRecord = ArrayData::create([
                     'Key' => $field,
                     'Label' => $label,
-                    'Value' => $submission->relField($field)
-                ]));
+                    'Value' => $value
+                ]);
+                $fields->push($summaryFieldRecord);
             }
-            $entry = ArrayData::create([
-                'Fields' => $fields
-            ]);
-            $list->push($entry);
+            $this->_cache_summary_values[ $submittedForm->ID ] = $fields;
         }
-        return $list;
+        return $paginatedList;
+    }
+
+    /**
+     * Return the summary values for a submission
+     * @return ArrayList|null
+     */
+    public function AvailableSummaryValues($id) : ?ArrayList {
+        if(isset($this->_cache_summary_values[$id])) {
+            return $this->_cache_summary_values[$id];
+        } else {
+            return null;
+        }
     }
 
     /**
      * Return fields that are marked as viewable in the summary
      */
     protected function getSummaryFields() : array {
+        if(count($this->_cache_summary_fields) > 0) {
+            return $this->_cache_summary_fields;
+        }
+
         $form = $this->getSubmissionForm();
         $fields = [];
         if(empty($form->ID)) {
@@ -179,14 +221,12 @@ class SubmissionListingPage extends \Page implements PermissionProvider
         // base fields
         $fields['Created.Nice'] = _t(__CLASS__ . '.CREATED','Created');
 
-        if($editableFields = EditableFormField::get()->filter(array('ParentID' => $form->ID))) {
-            foreach ($editableFields as $field) {
-                if ($field->ShowInSummary) {
-                    $fields[$field->Name] = $field->Title ?: $field->Name;
-                }
-            }
+        $editableFields = $form->Fields()->filter(['ShowInSummary' => 1]);
+        foreach ($editableFields as $field) {
+            $fields[$field->Name] = $field->Title ?: $field->Name;
         }
-        return $fields;
+        $this->_cache_summary_fields = $fields;
+        return $this->_cache_summary_fields;
     }
 
     /**
