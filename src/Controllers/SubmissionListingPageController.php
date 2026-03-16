@@ -17,7 +17,7 @@ class SubmissionListingPageController extends \PageController
     #[\Override]
     public function init()
     {
-        if(!SubmissionListingPage::canViewSubmissions()) {
+        if (!SubmissionListingPage::canViewSubmissions()) {
             return $this->httpError(403);
         }
 

@@ -7,15 +7,11 @@ use SilverStripe\Control\Controller;
 use SilverStripe\Forms\DropdownField;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\DataList;
-use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\PaginatedList;
 use SilverStripe\Security\Security;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\PermissionProvider;
-use SilverStripe\UserForms\Model;
 use SilverStripe\UserForms\Model\UserDefinedForm;
-use SilverStripe\UserForms\Model\EditableFormField;
-use SilverStripe\UserForms\Model\Submission\SubmittedForm;
 use SilverStripe\View\ArrayData;
 
 /**
@@ -26,7 +22,7 @@ use SilverStripe\View\ArrayData;
  */
 class SubmissionListingPage extends \Page implements PermissionProvider
 {
-    const PERMISSION_VIEW_LISTINGS = "USERFORM_SUBMISSION_VIEWER";
+    public const PERMISSION_VIEW_LISTINGS = "USERFORM_SUBMISSION_VIEWER";
 
     private static string $icon_class = "font-icon-p-list";
 
