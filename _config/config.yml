@@ -1,3 +1,13 @@
 ---
 Name: nswdpc-userforms-submissions
 ---
+---
+Name: nswdpc-userforms-submissions-elementform
+After:
+  - "#nswdpc-userforms-submissions"
+Only:
+  moduleexists: dnadesign/silverstripe-elemental-userforms
+---
+NSWDPC\UserForms\Submissions\SubmissionListingPage:
+  extensions:
+    ElementFormExtension: NSWDPC\UserForms\Submissions\ElementFormExtension
