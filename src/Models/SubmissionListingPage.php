@@ -21,44 +21,36 @@ use SilverStripe\View\ArrayData;
 /**
  * A page to handle display of listing submissions
  * @author James
+ * @property int $UserDefinedFormID
+ * @method \SilverStripe\UserForms\Model\UserDefinedForm UserDefinedForm()
  */
 class SubmissionListingPage extends \Page implements PermissionProvider
 {
     const PERMISSION_VIEW_LISTINGS = "USERFORM_SUBMISSION_VIEWER";
 
-    /**
-     * @var string
-     */
-    private static $icon_class = "font-icon-p-list";
+    private static string $icon_class = "font-icon-p-list";
 
     /**
      * Singular name for CMS
-     * @var string
      */
-    private static $singular_name = "A page to list form submissions";
+    private static string $singular_name = "A page to list form submissions";
 
     /**
      * Description for CMS
-     * @var string
      */
-    private static $description = "List form submissions for review by users holding required permissions";
+    private static string $description = "List form submissions for review by users holding required permissions";
 
     /**
      * Plural name for CMS
-     * @var string
      */
-    private static $plural_name = "Pages to list form submissions";
+    private static string $plural_name = "Pages to list form submissions";
 
     /**
      * table name
-     * @var string
      */
-    private static $table_name = "SubmissionListingPage";
+    private static string $table_name = "SubmissionListingPage";
 
-    /**
-     * @var array
-     */
-    private static $has_one = [
+    private static array $has_one = [
         "UserDefinedForm" => UserDefinedForm::class,
     ];
 
@@ -67,19 +59,14 @@ class SubmissionListingPage extends \Page implements PermissionProvider
      */
     private $_cache_summary_values = [];
 
-    /**
-     * @var array
-     */
-    private $_cache_summary_fields = [];
+    private array $_cache_summary_fields = [];
 
-    /**
-     * @var null
-     */
-    private $_cache_submission_form = null;
+    private $_cache_submission_form;
 
     /**
      * CMS Fields
      */
+    #[\Override]
     public function getCMSFields()
     {
         $fields = parent::getCMSFields();
@@ -87,7 +74,7 @@ class SubmissionListingPage extends \Page implements PermissionProvider
             "Root.Form",
             DropdownField::create(
                 "UserDefinedFormID",
-                _t(__CLASS__ . ".FORM_PAGE", "Form (page)"),
+                _t(self::class . ".FORM_PAGE", "Form (page)"),
                 UserDefinedForm::get()->sort("Title")->map("ID", "Title"),
             )->setEmptyString(""),
         );
@@ -103,12 +90,13 @@ class SubmissionListingPage extends \Page implements PermissionProvider
             Security::getCurrentUser(),
             self::PERMISSION_VIEW_LISTINGS,
         );
-        return $can ? true : false;
+        return (bool) $can;
     }
 
     /**
      * Reset cache properties on write
      */
+    #[\Override]
     public function onBeforeWrite()
     {
         parent::onBeforeWrite();
@@ -126,9 +114,11 @@ class SubmissionListingPage extends \Page implements PermissionProvider
         if (!self::canViewSubmissions()) {
             return false;
         }
+
         if ($this->_cache_submission_form) {
             return $this->_cache_submission_form;
         }
+
         $form = $this->UserDefinedForm();
         // ElementForm support
         if (
@@ -138,40 +128,42 @@ class SubmissionListingPage extends \Page implements PermissionProvider
         ) {
             $form = $this->ElementForm();
         }
+
         $this->_cache_submission_form = $form;
         return $this->_cache_submission_form;
     }
 
     /**
      * Retrieve submissions linked to the form
-     * @return DataList|null
      */
     public function getSubmissions(): ?DataList
     {
         if (!self::canViewSubmissions()) {
             return null;
         }
+
         $submissions = null;
         if ($form = $this->getSubmissionForm()) {
             $submissions = $form->Submissions()->sort("Created DESC");
         }
+
         return $submissions;
     }
 
     /**
      * Get the form submissions as an ArrayList, with fields based on getSummaryFields
-     * @return PaginatedList|null
      */
     public function getSubmissionSummary(): ?PaginatedList
     {
         $submissions = $this->getSubmissions();
-        if (!$submissions) {
+        if (!$submissions instanceof \SilverStripe\ORM\DataList) {
             return null;
         }
+
         $request = Controller::curr()->getRequest();
         $paginatedList = PaginatedList::create($submissions, $request);
         $summaryFields = $this->getSummaryFields();
-        foreach ($paginatedList->getIterator() as $i => $submittedForm) {
+        foreach ($paginatedList->getIterator() as $submittedForm) {
             $fields = ArrayList::create();
             foreach ($summaryFields as $field => $label) {
                 $value = $submittedForm->relField($field);
@@ -182,14 +174,15 @@ class SubmissionListingPage extends \Page implements PermissionProvider
                 ]);
                 $fields->push($summaryFieldRecord);
             }
+
             $this->_cache_summary_values[$submittedForm->ID] = $fields;
         }
+
         return $paginatedList;
     }
 
     /**
      * Return the summary values for a submission
-     * @return ArrayList|null
      */
     public function AvailableSummaryValues($id): ?ArrayList
     {
@@ -216,12 +209,13 @@ class SubmissionListingPage extends \Page implements PermissionProvider
         }
 
         // base fields
-        $fields["Created.Nice"] = _t(__CLASS__ . ".CREATED", "Created");
+        $fields["Created.Nice"] = _t(self::class . ".CREATED", "Created");
 
         $editableFields = $form->Fields()->filter(["ShowInSummary" => 1]);
         foreach ($editableFields as $field) {
             $fields[$field->Name] = $field->Title ?: $field->Name;
         }
+
         $this->_cache_summary_fields = $fields;
         return $this->_cache_summary_fields;
     }
@@ -229,7 +223,6 @@ class SubmissionListingPage extends \Page implements PermissionProvider
     /**
      * Get the form submissions as an ArrayList, with fields based on getSummaryFields
      * Accessible from template as {$SummaryFieldLabels}
-     * @return ArrayList
      */
     public function getSummaryFieldLabels(): ArrayList
     {
@@ -243,22 +236,24 @@ class SubmissionListingPage extends \Page implements PermissionProvider
                 ]),
             );
         }
+
         return $labels;
     }
 
     /**
      * @return array
      */
+    #[\Override]
     public function providePermissions()
     {
         return [
             self::PERMISSION_VIEW_LISTINGS => [
                 "name" => _t(
-                    __CLASS__ . ".PERMISSION_VIEW_LISTINGS_DESCRIPTION",
+                    self::class . ".PERMISSION_VIEW_LISTINGS_DESCRIPTION",
                     "View userform submissions on a submission listing page",
                 ),
                 "category" => _t(
-                    __CLASS__ . ".PERMISSION_VIEW_LISTINGS_CATEGORY",
+                    self::class . ".PERMISSION_VIEW_LISTINGS_CATEGORY",
                     "Forms",
                 ),
             ],

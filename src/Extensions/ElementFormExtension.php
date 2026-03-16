@@ -10,13 +10,13 @@ use SilverStripe\Forms\FieldList;
  * Add ElementForm support to the page
  * This extension is applied via conditional configuraration
  * @author James
+ * @property int $ElementFormID
+ * @method mixed ElementForm()
+ * @extends \SilverStripe\Core\Extension<static>
  */
 class ElementFormExtension extends \SilverStripe\Core\Extension
 {
-    /**
-     * @var array
-     */
-    private static $has_one = [
+    private static array $has_one = [
         // @phpstan-ignore class.notFound
         "ElementForm" => ElementForm::class,
     ];
@@ -29,7 +29,7 @@ class ElementFormExtension extends \SilverStripe\Core\Extension
         $userDefinedFormField = $fields->dataFieldByName("UserDefinedFormID");
         $elementFormField = DropdownField::create(
             "ElementFormID",
-            _t(__CLASS__ . ".FORM_BLOCK", "Form (content block)"),
+            _t(self::class . ".FORM_BLOCK", "Form (content block)"),
             // @phpstan-ignore class.notFound
             ElementForm::get()->sort("Title")->map("ID", "Title"),
         )->setEmptyString("");

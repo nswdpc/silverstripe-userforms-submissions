@@ -22,14 +22,14 @@ class SubmissionListingPageTest extends SapphireTest {
     protected static $fixture_file = './SubmissionListingPageTest.yml';
 
 
-    public function testPermission() {
+    public function testPermission(): void {
 
         $this->logInAs($this->objFromFixture(Member::class, 'notaviewer'));
 
         $this->assertFalse( SubmissionListingPage::canViewSubmissions() );
     }
 
-    public function testGetSubmissionForm() {
+    public function testGetSubmissionForm(): void {
 
         $this->logInAs($this->objFromFixture(Member::class, 'viewer'));
 
@@ -43,7 +43,7 @@ class SubmissionListingPageTest extends SapphireTest {
         $this->assertEquals($expectedForm->ID, $form->ID);
     }
 
-    public function testGetSubmissionSummary() {
+    public function testGetSubmissionSummary(): void {
 
         $this->logInAs($this->objFromFixture(Member::class, 'viewer'));
 
@@ -63,9 +63,9 @@ class SubmissionListingPageTest extends SapphireTest {
             $this->assertInstanceOf(ArrayList::class, $values);
             $this->assertEquals(3, $values->count());// includes Created
             foreach($values as $value) {
-                if($value->Key == $textField1->Name) {
+                if ($value->Key == $textField1->Name) {
                     $this->assertEquals( $textField1->Value, $value->Value->RAW());
-                } else if($value->Key == $textField2->Name) {
+                } elseif ($value->Key == $textField2->Name) {
                     $this->assertEquals( $textField2->Value, $value->Value->RAW());
                 }
             }
