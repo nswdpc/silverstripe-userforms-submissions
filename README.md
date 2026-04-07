@@ -44,7 +44,7 @@ composer require nswdpc/silverstripe-userforms-submissions
 
 ## Maintainers
 
-+ [dpcdigital@NSWDPC:~$](https://dpc.nsw.gov.au)
++ PD Web Team
 
 ## Bugtracker
 
