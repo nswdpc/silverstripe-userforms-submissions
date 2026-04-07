@@ -24,7 +24,7 @@ class SubmissionListingPage extends \Page implements PermissionProvider
 {
     public const PERMISSION_VIEW_LISTINGS = "USERFORM_SUBMISSION_VIEWER";
 
-    private static string $icon_class = "font-icon-p-list";
+    private static string $cms_icon_class = "font-icon-p-list";
 
     /**
      * Singular name for CMS
@@ -34,7 +34,7 @@ class SubmissionListingPage extends \Page implements PermissionProvider
     /**
      * Description for CMS
      */
-    private static string $description = "List form submissions for review by users holding required permissions";
+    private static string $class_description = "List form submissions for review by users holding required permissions";
 
     /**
      * Plural name for CMS
@@ -50,9 +50,6 @@ class SubmissionListingPage extends \Page implements PermissionProvider
         "UserDefinedForm" => UserDefinedForm::class,
     ];
 
-    /**
-     * @var array
-     */
     private array $_cache_summary_values = [];
 
     private array $_cache_summary_fields = [];
@@ -194,7 +191,7 @@ class SubmissionListingPage extends \Page implements PermissionProvider
      */
     protected function getSummaryFields(): array
     {
-        if (count($this->_cache_summary_fields) > 0) {
+        if ($this->_cache_summary_fields !== []) {
             return $this->_cache_summary_fields;
         }
 
