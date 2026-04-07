@@ -194,7 +194,7 @@ class SubmissionListingPage extends \Page implements PermissionProvider
      */
     protected function getSummaryFields(): array
     {
-        if (count($this->_cache_summary_fields) > 0) {
+        if ($this->_cache_summary_fields !== []) {
             return $this->_cache_summary_fields;
         }
 
