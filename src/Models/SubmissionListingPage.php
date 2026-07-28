@@ -5,14 +5,14 @@ namespace NSWDPC\UserForms\Submissions;
 use DNADesign\ElementalUserForms\Model\ElementForm;
 use SilverStripe\Control\Controller;
 use SilverStripe\Forms\DropdownField;
-use SilverStripe\ORM\ArrayList;
+use SilverStripe\Model\List\ArrayList;
 use SilverStripe\ORM\DataList;
-use SilverStripe\ORM\PaginatedList;
+use SilverStripe\Model\List\PaginatedList;
 use SilverStripe\Security\Security;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\PermissionProvider;
 use SilverStripe\UserForms\Model\UserDefinedForm;
-use SilverStripe\View\ArrayData;
+use SilverStripe\Model\ArrayData;
 
 /**
  * A page to handle display of listing submissions
@@ -24,7 +24,7 @@ class SubmissionListingPage extends \Page implements PermissionProvider
 {
     public const PERMISSION_VIEW_LISTINGS = "USERFORM_SUBMISSION_VIEWER";
 
-    private static string $icon_class = "font-icon-p-list";
+    private static string $cms_icon_class = "font-icon-p-list";
 
     /**
      * Singular name for CMS
@@ -34,7 +34,7 @@ class SubmissionListingPage extends \Page implements PermissionProvider
     /**
      * Description for CMS
      */
-    private static string $description = "List form submissions for review by users holding required permissions";
+    private static string $class_description = "List form submissions for review by users holding required permissions";
 
     /**
      * Plural name for CMS
@@ -50,14 +50,11 @@ class SubmissionListingPage extends \Page implements PermissionProvider
         "UserDefinedForm" => UserDefinedForm::class,
     ];
 
-    /**
-     * @var array
-     */
-    private $_cache_summary_values = [];
+    private array $_cache_summary_values = [];
 
     private array $_cache_summary_fields = [];
 
-    private $_cache_submission_form;
+    private ?UserDefinedForm $_cache_submission_form = null;
 
     /**
      * CMS Fields
@@ -103,15 +100,15 @@ class SubmissionListingPage extends \Page implements PermissionProvider
 
     /**
      * Retrieve the form, based on the selection made
-     * @return mixed
+     * @return mixed null|UserDefinedForm|ElementForm
      */
-    public function getSubmissionForm()
+    public function getSubmissionForm(): mixed
     {
         if (!self::canViewSubmissions()) {
-            return false;
+            return null;
         }
 
-        if ($this->_cache_submission_form) {
+        if (!is_null($this->_cache_submission_form)) {
             return $this->_cache_submission_form;
         }
 

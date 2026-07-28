@@ -33,7 +33,7 @@ class ElementFormExtension extends \SilverStripe\Core\Extension
             // @phpstan-ignore class.notFound
             ElementForm::get()->sort("Title")->map("ID", "Title"),
         )->setEmptyString("");
-        if ($userDefinedFormField) {
+        if ($userDefinedFormField instanceof \SilverStripe\Forms\FormField) {
             $fields->insertAfter("UserDefinedFormID", $elementFormField);
         } else {
             $fields->addFieldToTab("Root.Form", $elementFormField);
